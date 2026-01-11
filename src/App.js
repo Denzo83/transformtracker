@@ -13,16 +13,16 @@ const TransformationTracker = () => {
   const [activeTab, setActiveTab] = useState('daily');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const START_DATE = new Date(2025, 0, 11); // January 11, 2025
+  const START_DATE = new Date(2026, 0, 11); // January 11, 2026 (Sunday)
 
   const workoutSchedule = {
-    1: { name: "Legs Light/Rehab", type: "legs-light", emoji: "🦵", description: "Terminal knee extensions, wall sits, single-leg balance" },
-    2: { name: "Basketball", type: "basketball", emoji: "🏀", description: "30 min game time - monitor knee closely" },
-    3: { name: "Push Day", type: "push", emoji: "💪", description: "Bench press, overhead press, dips, triceps" },
-    4: { name: "Pull Day", type: "pull", emoji: "🔙", description: "Rows, pull-ups, deadlifts, biceps, face pulls" },
-    5: { name: "Legs Heavy", type: "legs-heavy", emoji: "🏋️", description: "Squats, leg press, lunges, hamstring curls" },
-    6: { name: "Rest & Recovery", type: "rest", emoji: "😴", description: "Active recovery, stretching, foam rolling" },
-    7: { name: "Upper Compound", type: "upper", emoji: "💪", description: "Compound movements, full upper body" }
+    1: { name: "Upper Compound", type: "upper", emoji: "💪", description: "Compound movements, full upper body" },
+    2: { name: "Legs Light/Rehab", type: "legs-light", emoji: "🦵", description: "Terminal knee extensions, wall sits, single-leg balance" },
+    3: { name: "Basketball", type: "basketball", emoji: "🏀", description: "30 min game time - monitor knee closely" },
+    4: { name: "Push Day", type: "push", emoji: "💪", description: "Bench press, overhead press, dips, triceps" },
+    5: { name: "Pull Day", type: "pull", emoji: "🔙", description: "Rows, pull-ups, deadlifts, biceps, face pulls" },
+    6: { name: "Legs Heavy", type: "legs-heavy", emoji: "🏋️", description: "Squats, leg press, lunges, hamstring curls" },
+    7: { name: "Rest & Recovery", type: "rest", emoji: "😴", description: "Active recovery, stretching, foam rolling" }
   };
 
   const tabs = [
@@ -35,7 +35,7 @@ const TransformationTracker = () => {
   ];
 
   const getMealPlan = (dayOfWeek) => {
-    const isTuesday = dayOfWeek === 2;
+    const isTuesday = dayOfWeek === 3; // Day 3 is now Tuesday (basketball day)
     return {
       morning: { item: "YoPro sachet + banana (optional)", protein: 15, carbs: isTuesday ? 27 : 0, cals: isTuesday ? 205 : 100 },
       lunch: { 
@@ -227,7 +227,7 @@ const TransformationTracker = () => {
           data.push({
             day: `W${week}D${day}`,
             steps: dayData.steps,
-            target: day === 2 ? 9000 : 12000
+            target: day === 3 ? 9000 : 12000
           });
         }
       }
@@ -341,8 +341,8 @@ const TransformationTracker = () => {
     return days[day - 1];
   };
 
-  const isShoppingDay = dayOfWeek === 7;
-  const isCookingDay = dayOfWeek === 7 || dayOfWeek === 3;
+  const isShoppingDay = dayOfWeek === 1; // Sunday
+  const isCookingDay = dayOfWeek === 1 || dayOfWeek === 4; // Sunday or Wednesday
 
   const styles = {
     container: {
@@ -642,11 +642,11 @@ const TransformationTracker = () => {
                   type="number"
                   value={dayData.steps || ''}
                   onChange={(e) => updateDayData({ steps: parseInt(e.target.value) })}
-                  placeholder={dayOfWeek === 2 ? "8000" : "12000"}
+                  placeholder={dayOfWeek === 3 ? "8000" : "12000"}
                   style={{...styles.input, fontSize: '24px', fontWeight: 'bold', textAlign: 'center'}}
                 />
                 <div style={{fontSize: '14px', textAlign: 'center', marginTop: '8px', ...styles.textMuted}}>
-                  Target: {dayOfWeek === 2 ? '8-10k' : '12-13k'}
+                  Target: {dayOfWeek === 3 ? '8-10k' : '12-13k'}
                 </div>
               </div>
 
