@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/transformtracker/static/css/main.e6c13ad2.css",
-    "main.js": "/transformtracker/static/js/main.773b85c1.js",
+    "main.js": "/transformtracker/static/js/main.9e908b87.js",
     "static/js/453.b41245a8.chunk.js": "/transformtracker/static/js/453.b41245a8.chunk.js",
     "index.html": "/transformtracker/index.html",
     "main.e6c13ad2.css.map": "/transformtracker/static/css/main.e6c13ad2.css.map",
-    "main.773b85c1.js.map": "/transformtracker/static/js/main.773b85c1.js.map",
+    "main.9e908b87.js.map": "/transformtracker/static/js/main.9e908b87.js.map",
     "453.b41245a8.chunk.js.map": "/transformtracker/static/js/453.b41245a8.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.e6c13ad2.css",
-    "static/js/main.773b85c1.js"
+    "static/js/main.9e908b87.js"
   ]
 }
