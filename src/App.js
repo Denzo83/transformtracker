@@ -1018,8 +1018,339 @@ const TransformationTracker = () => {
           </div>
         )}
 
+        {/* CALENDAR TAB */}
+        {activeTab === 'calendar' && (
+          <div>
+            <div style={styles.card}>
+              <h2 style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
+                56-Day Overview
+              </h2>
+              
+              {/* Legend */}
+              <div style={{display: 'flex', flexWrap: 'wrap', gap: '12px', marginBottom: '24px', fontSize: '14px'}}>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                  <div style={{width: '24px', height: '24px', borderRadius: '8px', background: 'linear-gradient(to bottom right, #22c55e, #10b981)'}}></div>
+                  <span style={styles.text}>Complete</span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                  <div style={{width: '24px', height: '24px', borderRadius: '8px', background: 'linear-gradient(to bottom right, #f59e0b, #f97316)'}}></div>
+                  <span style={styles.text}>Partial</span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                  <div style={{width: '24px', height: '24px', borderRadius: '8px', background: 'linear-gradient(to bottom right, #3b82f6, #8b5cf6)'}}></div>
+                  <span style={styles.text}>Started</span>
+                </div>
+                <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+                  <div style={{width: '24px', height: '24px', borderRadius: '8px', background: darkMode ? '#374151' : '#e5e7eb'}}></div>
+                  <span style={styles.text}>Empty</span>
+                </div>
+              </div>
+
+              {/* Calendar Grid */}
+              <div style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
+                {Array.from({ length: 8 }).map((_, weekIdx) => {
+                  const week = weekIdx + 1;
+                  return (
+                    <div key={week}>
+                      <h3 style={{fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', color: darkMode ? '#c084fc' : '#7c3aed'}}>
+                        Week {week}
+                      </h3>
+                      <div style={{display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '8px'}}>
+                        {Array.from({ length: 7 }).map((_, dayIdx) => {
+                          const day = dayIdx + 1;
+                          const status = getDayCompletionStatus(week, day);
+                          const isToday = week === currentWeek && day === currentDay;
+                          const date = getDateForDay(week, day);
+                          
+                          let bgGradient = '';
+                          if (status === 'complete') bgGradient = 'linear-gradient(to bottom right, #22c55e, #10b981)';
+                          else if (status === 'partial') bgGradient = 'linear-gradient(to bottom right, #f59e0b, #f97316)';
+                          else if (status === 'started') bgGradient = 'linear-gradient(to bottom right, #3b82f6, #8b5cf6)';
+                          else bgGradient = darkMode ? '#374151' : '#e5e7eb';
+                          
+                          return (
+                            <button
+                              key={day}
+                              onClick={() => {
+                                setCurrentWeek(week);
+                                setCurrentDay(day);
+                                setActiveTab('daily');
+                              }}
+                              style={{
+                                background: bgGradient,
+                                borderRadius: '12px',
+                                padding: '12px 8px',
+                                border: isToday ? '3px solid #8b5cf6' : 'none',
+                                cursor: 'pointer',
+                                transition: 'transform 0.2s',
+                                minHeight: '44px',
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+                              onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+                            >
+                              <div style={{color: '#fff', fontWeight: 'bold', fontSize: '18px'}}>{day}</div>
+                              <div style={{color: '#fff', fontSize: '12px', opacity: 0.9}}>{workoutSchedule[day].emoji}</div>
+                              <div style={{color: '#fff', fontSize: '10px', marginTop: '4px', opacity: 0.8}}>
+                                {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ANALYTICS TAB */}
+        {activeTab === 'analytics' && (
+          <div>
+            {/* Stats Summary */}
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '16px'}}>
+              <div style={styles.card}>
+                <div style={{fontSize: '32px', fontWeight: 'bold', color: darkMode ? '#a855f7' : '#7c3aed'}}>
+                  {calculateStats().totalMealsLogged}
+                </div>
+                <div style={{fontSize: '14px', ...styles.textMuted}}>Days Meal Tracked</div>
+              </div>
+              <div style={styles.card}>
+                <div style={{fontSize: '32px', fontWeight: 'bold', color: darkMode ? '#a855f7' : '#7c3aed'}}>
+                  {calculateStats().totalWorkoutsLogged}
+                </div>
+                <div style={{fontSize: '14px', ...styles.textMuted}}>Workouts Completed</div>
+              </div>
+              <div style={styles.card}>
+                <div style={{fontSize: '32px', fontWeight: 'bold', color: darkMode ? '#a855f7' : '#7c3aed'}}>
+                  {calculateStats().avgSteps.toLocaleString()}
+                </div>
+                <div style={{fontSize: '14px', ...styles.textMuted}}>Avg Daily Steps</div>
+              </div>
+            </div>
+
+            {/* Weight Chart */}
+            {getWeightChartData().length > 0 && (
+              <div style={styles.card}>
+                <h3 style={{fontSize: '20px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
+                  Weight Progress
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={getWeightChartData()}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#444' : '#ddd'} />
+                    <XAxis 
+                      dataKey="day" 
+                      stroke={darkMode ? '#888' : '#666'}
+                      tick={{ fill: darkMode ? '#888' : '#666', fontSize: 12 }}
+                    />
+                    <YAxis 
+                      domain={['dataMin - 1', 'dataMax + 1']}
+                      stroke={darkMode ? '#888' : '#666'}
+                      tick={{ fill: darkMode ? '#888' : '#666', fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: darkMode ? '#1f2937' : '#fff',
+                        border: `1px solid ${darkMode ? '#4b5563' : '#e5e7eb'}`,
+                        borderRadius: '8px',
+                        color: darkMode ? '#fff' : '#000'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="weight" 
+                      stroke="#8b5cf6" 
+                      strokeWidth={3}
+                      dot={{ fill: '#8b5cf6', r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Steps Chart */}
+            {getStepsChartData().length > 0 && (
+              <div style={styles.card}>
+                <h3 style={{fontSize: '20px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
+                  Daily Steps
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={getStepsChartData()}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#444' : '#ddd'} />
+                    <XAxis 
+                      dataKey="day" 
+                      stroke={darkMode ? '#888' : '#666'}
+                      tick={{ fill: darkMode ? '#888' : '#666', fontSize: 12 }}
+                    />
+                    <YAxis 
+                      stroke={darkMode ? '#888' : '#666'}
+                      tick={{ fill: darkMode ? '#888' : '#666', fontSize: 12 }}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: darkMode ? '#1f2937' : '#fff',
+                        border: `1px solid ${darkMode ? '#4b5563' : '#e5e7eb'}`,
+                        borderRadius: '8px',
+                        color: darkMode ? '#fff' : '#000'
+                      }}
+                    />
+                    <Bar dataKey="steps" fill="#3b82f6" radius={[8, 8, 0, 0]} />
+                    <Bar dataKey="target" fill="#9333ea" opacity={0.3} radius={[8, 8, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MEALS TAB */}
+        {activeTab === 'meals' && (
+          <div>
+            <div style={styles.card}>
+              <h2 style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
+                Meal Plan Reference
+              </h2>
+              
+              <div style={{display: 'flex', flexDirection: 'column', gap: '24px'}}>
+                <div>
+                  <h3 style={{fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', color: darkMode ? '#c084fc' : '#7c3aed'}}>
+                    Regular Days (Mon, Wed, Thu, Fri, Sat, Sun)
+                  </h3>
+                  <div style={{
+                    padding: '16px',
+                    borderRadius: '16px',
+                    background: darkMode ? '#1f2937' : '#f3e8ff',
+                  }}>
+                    <div style={{fontWeight: '600', marginBottom: '8px', ...styles.text}}>
+                      Target: 1,700 cal | 200g protein | 135g carbs
+                    </div>
+                    <ul style={{listStyle: 'none', padding: 0, margin: 0, fontSize: '14px', ...styles.textMuted, lineHeight: '2'}}>
+                      <li>• <strong>9am:</strong> YoPro + banana (optional)</li>
+                      <li>• <strong>12pm:</strong> 250g chicken + 120g rice + veggies</li>
+                      <li>• <strong>3pm:</strong> Protein shake + fruit (optional)</li>
+                      <li>• <strong>7pm:</strong> 250g chicken + 100g rice + veggies</li>
+                      <li>• <strong>9pm:</strong> YoPro</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', color: darkMode ? '#c084fc' : '#7c3aed'}}>
+                    Tuesday (Basketball Day)
+                  </h3>
+                  <div style={{
+                    padding: '16px',
+                    borderRadius: '16px',
+                    background: darkMode ? '#1f2937' : '#fed7aa',
+                  }}>
+                    <div style={{fontWeight: '600', marginBottom: '8px', ...styles.text}}>
+                      Target: 1,900 cal | 200g protein | 180g carbs
+                    </div>
+                    <ul style={{listStyle: 'none', padding: 0, margin: 0, fontSize: '14px', ...styles.textMuted, lineHeight: '2'}}>
+                      <li>• <strong>9am:</strong> YoPro + banana</li>
+                      <li>• <strong>12pm:</strong> 250g chicken + 150g rice + veggies</li>
+                      <li>• <strong>3pm:</strong> Protein shake + banana + 2 rice cakes</li>
+                      <li>• <strong>7-9pm:</strong> Basketball game</li>
+                      <li>• <strong>8-9pm:</strong> 250g chicken + 120g rice + veggies</li>
+                      <li>• <strong>9pm:</strong> YoPro</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', color: darkMode ? '#c084fc' : '#7c3aed'}}>
+                    Weekly Shopping List
+                  </h3>
+                  <div style={{
+                    padding: '16px',
+                    borderRadius: '16px',
+                    background: darkMode ? '#1f2937' : '#d1fae5',
+                  }}>
+                    <ul style={{listStyle: 'none', padding: 0, margin: 0, fontSize: '14px', ...styles.textMuted, lineHeight: '2'}}>
+                      <li>• 3.5kg chicken breast</li>
+                      <li>• 14 YoPro sachets</li>
+                      <li>• 2kg white rice</li>
+                      <li>• 7-10 bananas & 4-5 apples</li>
+                      <li>• 2-3kg broccoli + mixed veggies</li>
+                      <li>• Protein powder</li>
+                      <li>• Hot sauce, seasonings</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 style={{fontSize: '18px', fontWeight: 'bold', marginBottom: '12px', color: darkMode ? '#c084fc' : '#7c3aed'}}>
+                    Meal Prep Schedule
+                  </h3>
+                  <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px'}}>
+                    <div style={{
+                      padding: '16px',
+                      borderRadius: '16px',
+                      background: darkMode ? '#1f2937' : '#dbeafe',
+                    }}>
+                      <div style={{fontWeight: '600', marginBottom: '8px', ...styles.text}}>
+                        Sunday (90 min)
+                      </div>
+                      <ul style={{listStyle: 'none', padding: 0, margin: 0, fontSize: '14px', ...styles.textMuted, lineHeight: '2'}}>
+                        <li>• Cook 3.5kg chicken</li>
+                        <li>• Cook 1.5kg rice</li>
+                        <li>• Steam vegetables</li>
+                        <li>• Portion everything</li>
+                      </ul>
+                    </div>
+                    <div style={{
+                      padding: '16px',
+                      borderRadius: '16px',
+                      background: darkMode ? '#1f2937' : '#dbeafe',
+                    }}>
+                      <div style={{fontWeight: '600', marginBottom: '8px', ...styles.text}}>
+                        Wednesday (30 min)
+                      </div>
+                      <ul style={{listStyle: 'none', padding: 0, margin: 0, fontSize: '14px', ...styles.textMuted, lineHeight: '2'}}>
+                        <li>• Cook 1kg chicken</li>
+                        <li>• Cook 800g rice</li>
+                        <li>• Refresh vegetables</li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* JOURNAL TAB */}
+        {activeTab === 'notes' && (
+          <div>
+            <div style={styles.card}>
+              <h2 style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
+                Daily Journal
+              </h2>
+              <p style={{fontSize: '14px', marginBottom: '16px', ...styles.textMuted}}>
+                Week {currentWeek}, Day {currentDay} - {getDayName(dayOfWeek)}, {formatDate(getDateForDay(currentWeek, currentDay))}
+              </p>
+              <textarea
+                value={dayData.notes || ''}
+                onChange={(e) => updateDayData({ notes: e.target.value })}
+                placeholder="How are you feeling today? Any challenges? Victories? Knee status? Energy levels?"
+                style={{
+                  ...styles.input,
+                  minHeight: '300px',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                  lineHeight: '1.6',
+                }}
+              />
+              <div style={{fontSize: '14px', marginTop: '8px', ...styles.textMuted}}>
+                Your notes are saved automatically
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Placeholder for other tabs */}
-        {activeTab !== 'daily' && activeTab !== 'bodystats' && (
+        {activeTab !== 'daily' && activeTab !== 'bodystats' && activeTab !== 'calendar' && activeTab !== 'analytics' && activeTab !== 'meals' && activeTab !== 'notes' && (
           <div style={{...styles.card, textAlign: 'center', padding: '48px'}}>
             <h2 style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
               {tabs.find(t => t.id === activeTab)?.name}
