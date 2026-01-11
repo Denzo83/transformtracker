@@ -28,6 +28,7 @@ const TransformationTracker = () => {
   const tabs = [
     { id: 'daily', name: 'Today', icon: Target },
     { id: 'calendar', name: 'Calendar', icon: Calendar },
+    { id: 'bodystats', name: 'Body Stats', icon: TrendingDown },
     { id: 'analytics', name: 'Progress', icon: BarChart3 },
     { id: 'meals', name: 'Meal Plan', icon: Book },
     { id: 'notes', name: 'Journal', icon: FileText }
@@ -69,7 +70,7 @@ const TransformationTracker = () => {
   };
 
   const formatDate = (date) => {
-    const options = { weekday: 'short', month: 'short', day: 'numeric' };
+    const options = { month: 'short', day: 'numeric' };
     return date.toLocaleDateString('en-US', options);
   };
 
@@ -113,6 +114,7 @@ const TransformationTracker = () => {
       meals: {},
       steps: null,
       weight: null,
+      bodyFat: null,
       sleep: { bedTime: '', wakeTime: '', total: null },
       workout: false,
       kneeOk: null,
@@ -229,6 +231,72 @@ const TransformationTracker = () => {
       }
     }
     return data;
+  };
+
+  const getBodyFatChartData = () => {
+    const data = [];
+    for (let week = 1; week <= 8; week++) {
+      for (let day = 1; day <= 7; day++) {
+        const key = getDayKey(week, day);
+        const dayData = dailyData[key];
+        if (dayData?.bodyFat && dayData?.weight) {
+          data.push({
+            day: `W${week}D${day}`,
+            bodyFat: dayData.bodyFat,
+            week: week
+          });
+        }
+      }
+    }
+    return data;
+  };
+
+  const calculateBodyComposition = () => {
+    const allData = [];
+    for (let week = 1; week <= 8; week++) {
+      for (let day = 1; day <= 7; day++) {
+        const key = getDayKey(week, day);
+        const data = dailyData[key];
+        if (data?.weight && data?.bodyFat) {
+          const fatMass = data.weight * (data.bodyFat / 100);
+          const leanMass = data.weight - fatMass;
+          allData.push({
+            day: `W${week}D${day}`,
+            weight: data.weight,
+            bodyFat: data.bodyFat,
+            fatMass: fatMass.toFixed(1),
+            leanMass: leanMass.toFixed(1),
+            week: week
+          });
+        }
+      }
+    }
+    return allData;
+  };
+
+  const getLatestBodyStats = () => {
+    const composition = calculateBodyComposition();
+    if (composition.length === 0) return null;
+    return composition[composition.length - 1];
+  };
+
+  const getGoalBodyStats = () => {
+    const latest = getLatestBodyStats();
+    if (!latest) return null;
+    
+    const currentLeanMass = parseFloat(latest.leanMass);
+    const goalBF = 12; // 12% body fat goal
+    const goalWeight = currentLeanMass / (1 - goalBF / 100); // Maintain lean mass
+    const goalFatMass = goalWeight * (goalBF / 100);
+    
+    return {
+      goalWeight: goalWeight.toFixed(1),
+      goalFatMass: goalFatMass.toFixed(1),
+      goalLeanMass: currentLeanMass.toFixed(1),
+      goalBF: goalBF,
+      weightToLose: (parseFloat(latest.weight) - goalWeight).toFixed(1),
+      fatToLose: (parseFloat(latest.fatMass) - goalFatMass).toFixed(1)
+    };
   };
 
   const calculateAverageWeight = () => {
@@ -737,8 +805,221 @@ const TransformationTracker = () => {
           </div>
         )}
 
+        {/* BODY STATS TAB */}
+        {activeTab === 'bodystats' && (
+          <div>
+            {/* Current Stats Card */}
+            <div style={styles.card}>
+              <h2 style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
+                Current Body Composition
+              </h2>
+
+              <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', marginBottom: '24px'}}>
+                <div>
+                  <label style={{fontSize: '14px', fontWeight: '600', display: 'block', marginBottom: '8px', ...styles.textMuted}}>
+                    Weight (kg)
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={dayData.weight || ''}
+                    onChange={(e) => updateWeight(parseFloat(e.target.value))}
+                    placeholder="94.0"
+                    style={styles.input}
+                  />
+                </div>
+
+                <div>
+                  <label style={{fontSize: '14px', fontWeight: '600', display: 'block', marginBottom: '8px', ...styles.textMuted}}>
+                    Body Fat %
+                  </label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    value={dayData.bodyFat || ''}
+                    onChange={(e) => updateDayData({ bodyFat: parseFloat(e.target.value) })}
+                    placeholder="26.6"
+                    style={styles.input}
+                  />
+                </div>
+              </div>
+
+              {dayData.weight && dayData.bodyFat && (
+                <div style={{
+                  padding: '20px',
+                  borderRadius: '16px',
+                  background: darkMode ? '#1f2937' : 'linear-gradient(to right, #f3e8ff, #fce7f3)',
+                }}>
+                  <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '16px', textAlign: 'center'}}>
+                    <div>
+                      <div style={{fontSize: '28px', fontWeight: 'bold', color: darkMode ? '#ef4444' : '#dc2626'}}>
+                        {(dayData.weight * (dayData.bodyFat / 100)).toFixed(1)}kg
+                      </div>
+                      <div style={{fontSize: '12px', ...styles.textMuted}}>Fat Mass</div>
+                    </div>
+                    <div>
+                      <div style={{fontSize: '28px', fontWeight: 'bold', color: darkMode ? '#10b981' : '#059669'}}>
+                        {(dayData.weight * (1 - dayData.bodyFat / 100)).toFixed(1)}kg
+                      </div>
+                      <div style={{fontSize: '12px', ...styles.textMuted}}>Lean Mass</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Goal Progress */}
+            {getGoalBodyStats() && (
+              <div style={styles.card}>
+                <h2 style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
+                  Goal: 12% Body Fat
+                </h2>
+
+                <div style={{
+                  padding: '20px',
+                  borderRadius: '16px',
+                  background: darkMode ? '#1f2937' : 'linear-gradient(to right, #dbeafe, #e0e7ff)',
+                  marginBottom: '16px',
+                }}>
+                  <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '16px', textAlign: 'center'}}>
+                    <div>
+                      <div style={{fontSize: '14px', fontWeight: '600', marginBottom: '4px', ...styles.textMuted}}>
+                        Goal Weight
+                      </div>
+                      <div style={{fontSize: '24px', fontWeight: 'bold', color: darkMode ? '#60a5fa' : '#2563eb'}}>
+                        {getGoalBodyStats().goalWeight}kg
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize: '14px', fontWeight: '600', marginBottom: '4px', ...styles.textMuted}}>
+                        To Lose
+                      </div>
+                      <div style={{fontSize: '24px', fontWeight: 'bold', color: darkMode ? '#f59e0b' : '#d97706'}}>
+                        {getGoalBodyStats().weightToLose}kg
+                      </div>
+                    </div>
+                    <div>
+                      <div style={{fontSize: '14px', fontWeight: '600', marginBottom: '4px', ...styles.textMuted}}>
+                        Fat to Lose
+                      </div>
+                      <div style={{fontSize: '24px', fontWeight: 'bold', color: darkMode ? '#ef4444' : '#dc2626'}}>
+                        {getGoalBodyStats().fatToLose}kg
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style={{
+                  padding: '16px',
+                  borderRadius: '16px',
+                  background: darkMode ? 'rgba(34, 197, 94, 0.1)' : '#dcfce7',
+                  border: darkMode ? '2px solid rgba(34, 197, 94, 0.3)' : '2px solid #86efac',
+                }}>
+                  <div style={{fontSize: '14px', fontWeight: '600', marginBottom: '8px', color: darkMode ? '#86efac' : '#15803d'}}>
+                    💡 Goal Breakdown
+                  </div>
+                  <div style={{fontSize: '13px', ...styles.textMuted, lineHeight: '1.6'}}>
+                    Maintain {getGoalBodyStats().goalLeanMass}kg lean mass while reducing fat mass to {getGoalBodyStats().goalFatMass}kg.
+                    This puts you at {getGoalBodyStats().goalWeight}kg total weight at 12% body fat.
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Body Fat Chart */}
+            {getBodyFatChartData().length > 0 && (
+              <div style={styles.card}>
+                <h3 style={{fontSize: '20px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
+                  Body Fat % Progress
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={getBodyFatChartData()}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={darkMode ? '#444' : '#ddd'} />
+                    <XAxis 
+                      dataKey="day" 
+                      stroke={darkMode ? '#888' : '#666'}
+                      tick={{ fill: darkMode ? '#888' : '#666', fontSize: 12 }}
+                    />
+                    <YAxis 
+                      domain={['dataMin - 2', 'dataMax + 2']}
+                      stroke={darkMode ? '#888' : '#666'}
+                      tick={{ fill: darkMode ? '#888' : '#666', fontSize: 12 }}
+                      label={{ value: 'Body Fat %', angle: -90, position: 'insideLeft', fill: darkMode ? '#888' : '#666' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{
+                        backgroundColor: darkMode ? '#1f2937' : '#fff',
+                        border: `1px solid ${darkMode ? '#4b5563' : '#e5e7eb'}`,
+                        borderRadius: '8px',
+                        color: darkMode ? '#fff' : '#000'
+                      }}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="bodyFat" 
+                      stroke="#ef4444" 
+                      strokeWidth={3}
+                      dot={{ fill: '#ef4444', r: 4 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Body Composition Table */}
+            {calculateBodyComposition().length > 0 && (
+              <div style={styles.card}>
+                <h3 style={{fontSize: '20px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
+                  Full History
+                </h3>
+                <div style={{overflowX: 'auto'}}>
+                  <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                    <thead>
+                      <tr style={{borderBottom: darkMode ? '2px solid #374151' : '2px solid #e5e7eb'}}>
+                        <th style={{padding: '12px', textAlign: 'left', fontSize: '14px', fontWeight: '600', ...styles.text}}>Day</th>
+                        <th style={{padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: '600', ...styles.text}}>Weight</th>
+                        <th style={{padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: '600', ...styles.text}}>BF%</th>
+                        <th style={{padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: '600', ...styles.text}}>Fat Mass</th>
+                        <th style={{padding: '12px', textAlign: 'center', fontSize: '14px', fontWeight: '600', ...styles.text}}>Lean Mass</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {calculateBodyComposition().slice().reverse().map((entry, idx) => (
+                        <tr key={idx} style={{borderBottom: darkMode ? '1px solid #374151' : '1px solid #f3f4f6'}}>
+                          <td style={{padding: '12px', fontSize: '13px', ...styles.text}}>{entry.day}</td>
+                          <td style={{padding: '12px', textAlign: 'center', fontSize: '13px', ...styles.text}}>{entry.weight}kg</td>
+                          <td style={{padding: '12px', textAlign: 'center', fontSize: '13px', ...styles.text}}>{entry.bodyFat}%</td>
+                          <td style={{padding: '12px', textAlign: 'center', fontSize: '13px', color: darkMode ? '#ef4444' : '#dc2626'}}>{entry.fatMass}kg</td>
+                          <td style={{padding: '12px', textAlign: 'center', fontSize: '13px', color: darkMode ? '#10b981' : '#059669'}}>{entry.leanMass}kg</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Instructions */}
+            {(!dayData.weight || !dayData.bodyFat) && (
+              <div style={{
+                ...styles.card,
+                background: darkMode ? 'rgba(59, 130, 246, 0.1)' : '#dbeafe',
+                border: darkMode ? '2px solid rgba(59, 130, 246, 0.3)' : '2px solid #93c5fd',
+              }}>
+                <div style={{fontSize: '16px', fontWeight: '600', marginBottom: '8px', color: darkMode ? '#93c5fd' : '#1e40af'}}>
+                  📊 Track Your Body Composition
+                </div>
+                <div style={{fontSize: '14px', ...styles.textMuted, lineHeight: '1.6'}}>
+                  Enter your weight and body fat percentage to track your transformation. Use calipers, DEXA scan, 
+                  or smart scales for accurate BF% measurements. Consistency is key - measure at the same time each day!
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Placeholder for other tabs */}
-        {activeTab !== 'daily' && (
+        {activeTab !== 'daily' && activeTab !== 'bodystats' && (
           <div style={{...styles.card, textAlign: 'center', padding: '48px'}}>
             <h2 style={{fontSize: '24px', fontWeight: 'bold', marginBottom: '16px', ...styles.text}}>
               {tabs.find(t => t.id === activeTab)?.name}
