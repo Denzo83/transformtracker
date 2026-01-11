@@ -337,8 +337,9 @@ const TransformationTracker = () => {
   }), { protein: 0, carbs: 0, cals: 0 });
 
   const getDayName = (day) => {
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    return days[day - 1];
+    const date = getDateForDay(currentWeek, day);
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    return days[date.getDay()];
   };
 
   const isShoppingDay = dayOfWeek === 1; // Sunday
